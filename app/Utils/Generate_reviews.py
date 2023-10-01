@@ -88,7 +88,7 @@ async def read_csv_file(filename: str, rate: list):
         current_rate = choose_rate(rate)
         new_rates += [current_rate] * 2
         tasks.append(create_reviews(
-            examples, 75, 130, current_rate))
+            examples, 100, 130, current_rate))
     for i in range(short):
         current_rate = choose_rate(rate)
         new_rates += [current_rate] * 2
@@ -118,6 +118,7 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
         {keywords_to_focus_on}
         {emoji_prompt}
         I hope also some of the reviews to write about how products are good for users.
+        And I hope some reivews to have a bit grammer or spell errors like human-written-reviews.
         Don't forget that each review should contain {low}-{high} words.
         And output only one suitable title in front of review without quotes and don't output any extra header except title of review.
         Split title and content of each review with "/" like sample format.
@@ -179,7 +180,7 @@ async def create_emails(num: int):
 
 def regenerate_title(len, list_titles):
     emoji_prompt = f"Then insert suitable emojis at the front of some words of title for only {len/5} titles but that words shouldn't be the first or last word of any title."
-    sample_title = '\n'.join(titles)
+    sample_title = '\n'.join(str(title) for title in titles)
     instructor = f"""
         These are titles you can refer to that is very similar to human-written.
         {sample_title}
@@ -259,14 +260,14 @@ async def start(reviewCount: int, rate: int, From: str, To: str, keywords: str, 
 
     with open("./data/reviews.txt", "w") as txt_file:
         txt_file.write(new_reviews)
-        for review in list_reviews:
-            titles_and_bodys = review.split("/")
-            if len(titles_and_bodys) < 2:
-                continue
-            print(clean(titles_and_bodys[0]),
-                  "-----", clean(titles_and_bodys[1]))
-            list_titles.append(clean(titles_and_bodys[0]))
-            list_bodys.append(clean(titles_and_bodys[1]))
+    for review in list_reviews:
+        titles_and_bodys = review.split("/")
+        if len(titles_and_bodys) < 2:
+            continue
+        print(clean(titles_and_bodys[0]),
+              "-----", clean(titles_and_bodys[1]))
+        list_titles.append(clean(titles_and_bodys[0]))
+        list_bodys.append(clean(titles_and_bodys[1]))
 
     list_emails = clean(new_emails).split('|')
     list_names = clean(new_names).split('|')
