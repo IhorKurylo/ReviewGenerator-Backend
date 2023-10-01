@@ -110,6 +110,7 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
     instructor = f"""
         Each review contains {low}-{high} words.
         You have to write 2 reviews rating of {current_rate} stars, so your final output should contain {low*2}-{high*2} words.
+        1 or 2 rates are bad, 3 is normal, 4 is good and 5 means excellent.
         The more stars of product the better.
         Write 2 reviews based on user provided sample reviews below.
         When you write reviews, you must focus on one of below topics.
