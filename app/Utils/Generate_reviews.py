@@ -61,14 +61,14 @@ async def read_csv_file(filename: str, rate: list):
     global body, emails, names, number_of_reviews, new_rates, titles
 
     review = pd.read_csv(f"data/{filename}")
-    titles = review["title"].to_numpy()
+    titles = review["title"].head(5).to_numpy()
     body = review["body"].to_numpy()
     emails = review["reviewer_email"].head(10).to_numpy()
-    names = review["reviewer_name"].head(10).to_numpy()
+    names = review["reviewer_name"].head(5).to_numpy()
     examples = ""
     length = len(body)
 
-    for i in range(0, min(10, length)):
+    for i in range(0, min(5, length)):
         examples += f"Sample Review {i}: \n {str(body[i])}\n\n"
     with open("./data/reviews.txt", "w") as txt_file:
         txt_file.write(examples.strip())
@@ -108,14 +108,12 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
         1, 5) == 3 else ""
     print(emoji_prompt)
     instructor = f"""
-        You will act as a customer from now on.        
         Each review contains {low}-{high} words.
         You have to write 2 reviews rating of {current_rate} stars, so your final output should contain {low*2}-{high*2} words.
         The more stars of product the better.
         Write 2 reviews based on user provided sample reviews below.
         When you write reviews, you must focus on one of below topics.
-        These are topics you should choose to focus on.
-        {keywords_to_focus_on}
+        topics: {keywords_to_focus_on}
         {emoji_prompt}
         I hope also some of the reviews to write about how products are good for users.
         And I hope some reivews to have a bit grammer or spell errors like human-written-reviews.
@@ -129,7 +127,7 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
         I was looking for something to ✨ boost the color of my hair.
         | (This is character that is split reviews. Remember this!)
         Hydrated colored hair /
-        Very easy to use, it lathers very quickly but doesn't leave that weird feeling of fake hydration.
+        Very easy to use, it lathers very quickly.
     """
     completion = await openai.ChatCompletion.acreate(
         model="gpt-4",
@@ -181,6 +179,7 @@ async def create_emails(num: int):
 def regenerate_title(len, list_titles):
     emoji_prompt = f"Then insert suitable emojis at the front of some words of title for only {len/5} titles but that words shouldn't be the first or last word of any title."
     sample_title = '\n'.join(str(title) for title in titles)
+    print(sample_title)
     instructor = f"""
         These are titles you can refer to that is very similar to human-written.
         {sample_title}
@@ -264,8 +263,8 @@ async def start(reviewCount: int, rate: int, From: str, To: str, keywords: str, 
         titles_and_bodys = review.split("/")
         if len(titles_and_bodys) < 2:
             continue
-        print(clean(titles_and_bodys[0]),
-              "-----", clean(titles_and_bodys[1]))
+        # print(clean(titles_and_bodys[0]),
+        #       "-----", clean(titles_and_bodys[1]))
         list_titles.append(clean(titles_and_bodys[0]))
         list_bodys.append(clean(titles_and_bodys[1]))
 
