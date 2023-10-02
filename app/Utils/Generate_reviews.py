@@ -191,7 +191,7 @@ def regenerate_title(len, list_titles):
         Based on above title samples, rewrite {len} of user provided titles below so that all titles are completely different each other.
         These are {len} of titles you should rewrite.
         {list_titles}
-        Almost every words should start with lowercase letters except only 1 or 2 words you want to emphasize to should be all uppercase letters.
+        Almost every words should start with lowercase letters except only 0 or 1 or 2 words you want to emphasize to should be all uppercase letters.
         It is very important that all the titles' should have different capitalization each other.
         There shouldn't be two titles that have same capitalization stucture each other as possible as you can.
         Please keep the title concise and under 20 words without quotes, and ensure that the meaning is maintained.
