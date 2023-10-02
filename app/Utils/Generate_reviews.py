@@ -58,7 +58,7 @@ def choose_rate(rate: list):
 
 
 async def read_csv_file(filename: str, rate: list):
-    global body, emails, names, number_of_reviews, new_rates, titles
+    global body, emails, names, number_of_reviews, titles
 
     review = pd.read_csv(f"data/{filename}")
     titles = review["title"].head(5).to_numpy()
@@ -75,25 +75,28 @@ async def read_csv_file(filename: str, rate: list):
 
     tasks = []
     number_of_reviews = int(number_of_reviews / 2)
-    medium = int(number_of_reviews * 0.3)
-    long = int(number_of_reviews * 0.1)
+    medium = int(number_of_reviews * 0.3 + 0.5 * random.randint(0, 1))
+    long = int(number_of_reviews * 0.1 + 0.5 * random.randint(0, 1))
     short = int(number_of_reviews - medium - long)
 
     for i in range(long):
         current_rate = choose_rate(rate)
-        new_rates += [current_rate] * 2
         tasks.append(create_reviews(
             examples, 200, 300, current_rate))
+        print("long: ", current_rate)
+        print("long: ", current_rate)
     for i in range(medium):
         current_rate = choose_rate(rate)
-        new_rates += [current_rate] * 2
         tasks.append(create_reviews(
             examples, 100, 130, current_rate))
+        print("medium: ", current_rate)
+        print("medium: ", current_rate)
     for i in range(short):
         current_rate = choose_rate(rate)
-        new_rates += [current_rate] * 2
         tasks.append(create_reviews(
             examples, 25, 75, current_rate))
+        print("short: ", current_rate)
+        print("short: ", current_rate)
 
     print(short, medium, long)
     number_of_reviews *= 2
@@ -103,15 +106,15 @@ async def read_csv_file(filename: str, rate: list):
 
 
 async def create_reviews(examples: str, low: int, high: int, current_rate: int):
-    global new_reviews, total_tokens
-    emoji_prompt = "Then insert suitable emoji at the front of some words of review but that words shouldn't be the last word of any sentences." if random.randint(
+    global new_reviews, total_tokens, new_rates
+    emoji_prompt = "Then insert emoji suitable for whole meaning of reviews, not for meaning of one word at the front of some words of review but that words shouldn't be the last word of any sentences." if random.randint(
         1, 5) == 3 else ""
     print(emoji_prompt)
     instructor = f"""
         Each review contains {low}-{high} words.
         You have to write 2 reviews rating of {current_rate} stars, so your final output should contain {low*2}-{high*2} words.
-        1 or 2 rates are bad, 3 is normal, 4 is good and 5 means excellent.
-        The more stars of product the better.
+        0 means very poor review, 1 or 2 rates mean bad, 3 means not bad, 4 means good and 5 means excellent.
+        More stars means better review.
         Write 2 reviews based on user provided sample reviews below.
         When you write reviews, you must focus on one of below topics.
         topics: {keywords_to_focus_on}
@@ -119,7 +122,7 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
         I hope also some of the reviews to write about how products are good for users.
         And I hope some reivews to have a bit grammer or spell errors like human-written-reviews.
         Don't forget that each review should contain {low}-{high} words.
-        And output only one suitable title in front of review without quotes and don't output any extra header except title of review.
+        Based on generated reviews, you will generate attention-grabbing title seems like human written.
         Split title and content of each review with "/" like sample format.
         Please split two reviews with character '|'.
         ----------------
@@ -146,6 +149,7 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
     )
     total_tokens += completion.usage["total_tokens"]
     new_reviews += completion.choices[0].message["content"] + "\n |"
+    new_rates += [current_rate] * 2
     with open("./data/reviews.txt", "w") as txt_file:
         txt_file.write(completion.choices[0].message["content"])
 
@@ -178,18 +182,24 @@ async def create_emails(num: int):
 
 
 def regenerate_title(len, list_titles):
-    emoji_prompt = f"Then insert suitable emojis at the front of some words of title for only {len/5} titles but that words shouldn't be the first or last word of any title."
+    emoji_prompt = f"Then insert emojis at the front of some words of title that is suitable to whole meaning of title for only {len/5} titles but that words shouldn't be the first or last word of any title."
     sample_title = '\n'.join(str(title) for title in titles)
     print(sample_title)
     instructor = f"""
         These are titles you can refer to that is very similar to human-written.
         {sample_title}
         Based on above title samples, rewrite {len} of user provided titles below so that all titles are completely different each other.
+        These are {len} of titles you should rewrite.
+        {list_titles}
+        Almost every words should start with lowercase letters but some words you want to emphasize to should be all uppercase letters.
+        It is very important that all the titles' should have different capitalization each other.
+        There shouldn't be two titles that have same capitalization stucture each other as possible as you can.
+        Please keep the title concise and under 20 words without quotes, and ensure that the meaning is maintained.
         {emoji_prompt}
         Split generated titles with character "|".
         -------
         Sample Format
-        Elevate ✨Your Hue | Elevate Your Hue
+        Elevate ✨your hue | elevate Your hue
     """
     completion = openai.ChatCompletion.create(
         model="gpt-4",
@@ -197,10 +207,6 @@ def regenerate_title(len, list_titles):
             {"role": "system", "content": instructor},
             {"role": "user",
              "content": f"""
-                These are {len} of titles you should rewrite.
-                {list_titles}
-                Please generate {len} titles completely different each other based on above list.
-                {emoji_prompt}
                 Don't forget to split generated titles with character "|".
              """
              }
