@@ -113,7 +113,7 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
     instructor = f"""
         Each review contains {low}-{high} words.
         You have to write 2 reviews rating of {current_rate} stars, so your final output should contain {low*2}-{high*2} words.
-        0 means very poor review, 1 or 2 rates mean bad, 3 means not bad, 4 means good and 5 means excellent.
+        0 means very poor review, 1 or 2 rates mean bad, 3 means not bad and not good(normal), 4 means good and 5 means excellent.
         More stars means better review.
         Write 2 reviews based on user provided sample reviews below.
         When you write reviews, you must focus on one of below topics.
@@ -191,7 +191,7 @@ def regenerate_title(len, list_titles):
         Based on above title samples, rewrite {len} of user provided titles below so that all titles are completely different each other.
         These are {len} of titles you should rewrite.
         {list_titles}
-        Almost every words should start with lowercase letters but some words you want to emphasize to should be all uppercase letters.
+        Almost every words should start with lowercase letters except only 1 or 2 words you want to emphasize to should be all uppercase letters.
         It is very important that all the titles' should have different capitalization each other.
         There shouldn't be two titles that have same capitalization stucture each other as possible as you can.
         Please keep the title concise and under 20 words without quotes, and ensure that the meaning is maintained.
