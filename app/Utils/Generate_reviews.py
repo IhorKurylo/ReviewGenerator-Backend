@@ -11,8 +11,10 @@ from datetime import datetime, timedelta
 
 dotenv.load_dotenv()
 
-number_of_reviews = 20
+number_of_reviews = 50
 openai.api_key = os.getenv("OPENAI_API_KEY")
+unit = 6
+long_unit = 3
 
 body = []
 emails = []
@@ -58,7 +60,7 @@ def choose_rate(rate: list):
 
 
 async def read_csv_file(filename: str, rate: list):
-    global body, emails, names, number_of_reviews, titles
+    global body, emails, names, titles, unit, long_unit
 
     review = pd.read_csv(f"data/{filename}")
     titles = review["title"].head(5).to_numpy()
@@ -74,48 +76,49 @@ async def read_csv_file(filename: str, rate: list):
         txt_file.write(examples.strip())
 
     tasks = []
-    number_of_reviews = int(number_of_reviews / 2)
-    medium = int(number_of_reviews * 0.3 + 0.5 * random.randint(0, 1))
-    long = int(number_of_reviews * 0.1 + 0.5 * random.randint(0, 1))
-    short = int(number_of_reviews - medium - long)
+    medium = int(number_of_reviews * 0.3 / unit)
+    long = int(number_of_reviews * 0.2 / long_unit)
+    short = int((number_of_reviews - medium*unit - long*long_unit) / unit)
 
     for i in range(long):
         current_rate = choose_rate(rate)
         tasks.append(create_reviews(
-            examples, 200, 300, current_rate))
+            examples, 100, 150, current_rate, True))
         print("long: ", current_rate)
         print("long: ", current_rate)
     for i in range(medium):
         current_rate = choose_rate(rate)
         tasks.append(create_reviews(
-            examples, 100, 130, current_rate))
+            examples, 30, 75, current_rate))
         print("medium: ", current_rate)
         print("medium: ", current_rate)
     for i in range(short):
         current_rate = choose_rate(rate)
         tasks.append(create_reviews(
-            examples, 25, 75, current_rate))
+            examples, 15, 30, current_rate))
         print("short: ", current_rate)
         print("short: ", current_rate)
 
     print(short, medium, long)
-    number_of_reviews *= 2
     tasks.extend([create_emails(number_of_reviews),
                  create_names(number_of_reviews)])
     await asyncio.gather(*tasks)
 
 
-async def create_reviews(examples: str, low: int, high: int, current_rate: int):
+async def create_reviews(examples: str, low: int, high: int, current_rate: int, is_long: bool = False):
     global new_reviews, total_tokens, new_rates
     emoji_prompt = "Then insert emoji suitable for whole meaning of reviews, not for meaning of one word at the front of some words of review but that words shouldn't be the last word of any sentences." if random.randint(
         1, 5) == 3 else ""
     print(emoji_prompt)
+    current_unit = unit
+    if is_long:
+        current_unit = long_unit
     instructor = f"""
         Each review contains {low}-{high} words.
-        You have to write 2 reviews rating of {current_rate} stars, so your final output should contain {low*2}-{high*2} words.
+        You have to write {current_unit} reviews rating of {current_rate} stars, so your final output should contain {low*current_unit}-{high*current_unit} words.
         0 means very poor review, 1 or 2 rates mean bad, 3 means not bad and not good(normal), 4 means good and 5 means excellent.
         More stars means better review.
-        Write 2 reviews based on user provided sample reviews below.
+        Write {current_unit} reviews based on user provided sample reviews below.
         When you write reviews, you must focus on one of below topics.
         topics: {keywords_to_focus_on}
         {emoji_prompt}
@@ -124,7 +127,7 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
         Don't forget that each review should contain {low}-{high} words.
         Based on generated reviews, you will generate attention-grabbing title seems like human written.
         Split title and content of each review with "/" like sample format.
-        Please split two reviews with character '|'.
+        Please split {current_unit} reviews with character '|'.
         ----------------
         Sample Format(don't output this line)
         A Magical Change /
@@ -142,14 +145,14 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int):
                 These are sample reviews you can refer to.
                 {examples}
                 Please create reviews.
-                Don't forget to split two reviews with character '|'.
+                Don't forget to split {current_unit} reviews with character '|'.
              """
              }
         ]
     )
     total_tokens += completion.usage["total_tokens"]
     new_reviews += completion.choices[0].message["content"] + "\n |"
-    new_rates += [current_rate] * 2
+    new_rates += [current_rate] * current_unit
     with open("./data/reviews.txt", "w") as txt_file:
         txt_file.write(completion.choices[0].message["content"])
 
@@ -184,13 +187,14 @@ async def create_emails(num: int):
 def regenerate_title(len, list_titles):
     emoji_prompt = f"Then insert emojis at the front of some words of title that is suitable to whole meaning of title for only {len/5} titles but that words shouldn't be the first or last word of any title."
     sample_title = '\n'.join(str(title) for title in titles)
+    list_title = '\n'.join(str(title) for title in list_titles)
     print(sample_title)
     instructor = f"""
         These are titles you can refer to that is very similar to human-written.
         {sample_title}
         Based on above title samples, rewrite {len} of user provided titles below so that all titles are completely different each other.
         These are {len} of titles you should rewrite.
-        {list_titles}
+        {list_title}
         Almost every words should start with lowercase letters except only 0 or 1 or 2 words you want to emphasize to should be all uppercase letters.
         It is very important that all the titles' should have different capitalization each other.
         There shouldn't be two titles that have same capitalization stucture each other as possible as you can.
@@ -279,6 +283,9 @@ async def start(reviewCount: int, rate: int, From: str, To: str, keywords: str, 
     list_names = clean(new_names).split('|')
     # print(len(list_emails))
     # print(len(list_names))
+    print("list_titles0: ", len(list_titles))
+    print("total_tokens: ", total_tokens)
+
     list_titles = regenerate_title(
         len(list_titles), '\n'.join(list_titles)).split('|')
 
