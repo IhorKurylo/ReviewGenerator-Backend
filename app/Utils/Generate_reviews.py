@@ -3,6 +3,7 @@ import openai
 import dotenv
 import pandas as pd
 # import Levenshtein
+import chardet
 import asyncio
 import time
 import random
@@ -62,7 +63,12 @@ def choose_rate(rate: list):
 async def read_csv_file(filename: str, rate: list):
     global body, emails, names, titles, unit, long_unit
 
-    review = pd.read_csv(f"data/{filename}")
+    print("here1")
+    with open(f"data/{filename}", 'rb') as f:
+        result = chardet.detect(f.read())  # or readline if the file is large
+        print(result['encoding'])
+
+    review = pd.read_csv(f"data/{filename}", encoding=result['encoding'])
     titles = review["title"].head(5).to_numpy()
     body = review["body"].to_numpy()
     emails = review["reviewer_email"].head(10).to_numpy()
