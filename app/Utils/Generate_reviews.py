@@ -22,6 +22,10 @@ emails = []
 names = []
 titles = []
 keywords_to_focus_on = ""
+products_list = []
+products_percent = 30
+
+
 new_reviews = ""
 new_emails = ""
 new_names = ""
@@ -76,6 +80,9 @@ async def read_csv_file(filename: str, rate: list):
     examples = ""
     length = len(body)
 
+    
+    
+
     for i in range(0, min(5, length)):
         examples += f"Sample Review {i}: \n {str(body[i])}\n\n"
     with open("./data/reviews.txt", "w") as txt_file:
@@ -101,7 +108,7 @@ async def read_csv_file(filename: str, rate: list):
     for i in range(short):
         current_rate = choose_rate(rate)
         tasks.append(create_reviews(
-            examples, 15, 30, current_rate))
+            examples, 25, 30, current_rate))
         print("short: ", current_rate)
         print("short: ", current_rate)
 
@@ -112,7 +119,15 @@ async def read_csv_file(filename: str, rate: list):
 
 
 async def create_reviews(examples: str, low: int, high: int, current_rate: int, is_long: bool = False):
-    global new_reviews, total_tokens, new_rates
+    global new_reviews, total_tokens, new_rates, products_list
+    threshold = 10 * products_percent / 100
+    rand = random.randint(1, 10)
+    product_prompt = ""
+    if rand <= threshold:
+        product_name = random.choice(products_list)
+        print("product_name: ", product_name)
+        product_prompt = f"{product_name} is name of product. You have to write the review of this product'. Review should contain exact name of this product."
+        print(product_prompt)
     emoji_prompt = "Then insert emoji suitable for whole meaning of reviews, not for meaning of one word at the front of some words of review but that words shouldn't be the last word of any sentences." if random.randint(
         1, 5) == 3 else ""
     print(emoji_prompt)
@@ -120,6 +135,7 @@ async def create_reviews(examples: str, low: int, high: int, current_rate: int, 
     if is_long:
         current_unit = long_unit
     instructor = f"""
+        {product_prompt}
         Each review contains {low}-{high} words.
         You have to write {current_unit} reviews rating of {current_rate} stars, so your final output should contain {low*current_unit}-{high*current_unit} words.
         0 means very poor review, 1 or 2 rates mean bad, 3 means not bad and not good(normal), 4 means good and 5 means excellent.
@@ -262,10 +278,13 @@ def generate_dates(num: int, start_date, end_date):
     return result
 
 
-async def start(reviewCount: int, rate: int, From: str, To: str, keywords: str, filename: str):
-    global new_emails, new_names, number_of_reviews, rating_right, keywords_to_focus_on
+async def start(reviewCount: int, rate: int, From: str, To: str, keywords: str, products: str, percent: int, filename: str):
+    global new_emails, new_names, number_of_reviews, rating_right, keywords_to_focus_on, products_list, products_percent
     number_of_reviews = reviewCount
     keywords_to_focus_on = keywords
+    products_list = clean(products).split(',')
+    products_percent = percent
+    print("products_list: ", products_list)
     current_time = time.time()
     init()
     await read_csv_file(filename, rate)
