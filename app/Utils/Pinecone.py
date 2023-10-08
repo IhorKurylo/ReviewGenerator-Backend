@@ -107,8 +107,7 @@ def get_context(msg: str):
     # print("token: ", tokens)
     # print("context --------------------- ", context)
     # print("_______________________________________")
-    get_answer(context, msg)
-    return {"context": context}
+    return get_answer(context, msg)
 
 
 def get_answer(context, msg):
@@ -141,6 +140,7 @@ def get_answer(context, msg):
             # stream=True
         )
         print("answer --------------:\n", response.choices[0].message.content)
+        return response.choices[0].message.content
         # for chunk in response:
         #     if 'content' in chunk.choices[0].delta:
         #         string = chunk.choices[0].delta.content

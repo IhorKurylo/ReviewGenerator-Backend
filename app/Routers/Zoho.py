@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Request, FastAPI, requests
+from fastapi import APIRouter, Request, Form
 
-from app.Utils.Get_email_content import get_access_token, get_account_id, get_mail_context, get_mail_list
+from app.Utils.Get_email_content import get_access_token, get_account_id, get_mail_context, get_mail_list, start
+from app.Utils.Pinecone import get_context
 
 
 
@@ -41,5 +42,11 @@ def zoho_callback_route(request: Request):
 #     get_mail_list()
 #     return 'OK', 200
 
+@router.post('/generate-response')
+def generate_response_route(email: str = Form(...)):
+    return get_context(email)
 
-
+@router.post('/extract-email-content')
+def extract_email_content():
+    start()
+    return []
