@@ -75,7 +75,7 @@ def train_txt(threshold: str):
     # loader = TextLoader(file_path=f"./train-data/{namespace}-{filename}")
     # documents = loader.load()
     doc = Document(page_content=threshold, metadata={"source": threshold})
-    print("threshold: -----------------------_________________", threshold)
+    # print("threshold: -----------------------_________________", threshold)
     chunks = split_document(doc)
     Pinecone.from_documents(
         chunks, embeddings, index_name=index_name)
@@ -92,7 +92,7 @@ def get_context(msg: str):
     # print("here")
     db = Pinecone.from_existing_index(
         index_name=index_name, embedding=embeddings)
-    results = db.similarity_search_with_score(msg, k=1)
+    results = db.similarity_search_with_score(msg, k=3)
     # print(results)
     context = ""
     for result in results:
@@ -106,6 +106,7 @@ def get_context(msg: str):
     #         tokens += len(nltk.word_tokenize(result[0].page_content))
     # print("token: ", tokens)
     # print("context --------------------- ", context)
+    # print("_______________________________________")
     get_answer(context, msg)
     return {"context": context}
 
@@ -114,14 +115,16 @@ def get_answer(context, msg):
     global prompt
 
     instructor = f"""
-      You should write the reply for user provided email.
-      You can refer to sample replys.
-      Below are sample emails and replys.
-      Please provide quite similar replies to user provided email.
-      These are kinds of conversation of emails and its replies.
-      The most important thing is writing style.
-      Writing style should be same with sample replies below.
-      {context}
+    Consider the tone and context of the email conversation. Use the same level of formality or informality as in the sample replies.
+    Pay attention to the specific language and phrases used in the sample replies. Try to incorporate similar language in your responses.
+    Understand the nature of the query or issue raised in the email. Make sure your reply addresses it directly and provides a clear and concise solution or answer.
+    Show empathy and understanding in your responses. This can be achieved by acknowledging the sender's feelings or situation, and expressing a genuine desire to help.
+    Don't forget to include a warm closing and your signature at the end of the email. This not only adds a personal touch but also makes the communication more professional.
+    Corporate explanations, apologies, major instructions, procedures are all crucial factors.
+    These are kinds of conversation of emails and its replies.
+    The samples given were not given in the order of emails and responses, and several examples are listed.
+    So you have to find mail and response pairs based on the given times and the email address of the email sender, and based on that generate a response that is very similar to the example.
+    {context}
     """
     try:
         response = openai.ChatCompletion.create(
@@ -129,7 +132,11 @@ def get_answer(context, msg):
             max_tokens=2000,
             messages=[
                 {'role': 'system', 'content': instructor},
-                {'role': 'user', 'content': msg }
+                {'role': 'user', 'content': f"""
+                    {msg}
+                    # The email you see above was sent to me.
+                    # Please provide me response to the email provided above.
+                """ }
             ],
             # stream=True
         )

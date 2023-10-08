@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, FastAPI, requests
 
-from app.Utils.Get_email_content import get_access_token, get_account_id, send_mail, get_mail_context, get_mail_list, refresh_auth
+from app.Utils.Get_email_content import get_access_token, get_account_id, get_mail_context, get_mail_list
 
 
 
@@ -16,7 +16,8 @@ def zoho_callback_route(request: Request):
     if code is not None:
         get_access_token(request, code)
         get_account_id()
-    for i in range(0, 1):
+    for i in range(0, 80):
+        print("step: ", i)
         if get_mail_list(1 + i*200) == False :
             break
     # get_mail_list()

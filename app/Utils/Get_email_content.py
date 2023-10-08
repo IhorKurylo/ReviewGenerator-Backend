@@ -7,9 +7,9 @@ from fastapi import Request
 # Configure this.
 FROM_EMAIL_ADDR = 'ihorkurylo5@zohomail.com'
 TO_EMAIL_ADDR = 'andriilohvin@gmail.com'
-REDIRECT_URL = 'http://192.168.148.37:5000/callback/'
-CLIENT_ID = '1000.BWV591EOQJX8AUJS22NUGIJGIMXULO'
-CLIENT_SECRET = '00bc90f92fe8ec91904acb23b285f0b7602a9893f8'
+REDIRECT_URL = 'http://localhost:5000/callback/'
+CLIENT_ID = '1000.PNFU8HRNLRN9MPQ2RSFI3PYFVJ75LC'
+CLIENT_SECRET = '413be26aa64ff2111cf96afb02c9acd19ab5b583d0'
 BASE_OAUTH_API_URL = 'https://accounts.zoho.com/'
 BASE_API_URL = 'https://mail.zoho.com/api/'
 
@@ -19,7 +19,7 @@ ZOHO_DATA = {
     "refresh_token": "",
     "api_domain": "https://www.zohoapis.com",
     "token_type": "Bearer",
-    "expires_in": 3600,
+    "expires_in": 7200,
     "account_id": "",
     "folder_id": "",
 }
@@ -68,23 +68,23 @@ def get_account_id():
     ZOHO_DATA['account_id'] = data['data'][0]['accountId']
 
 
-def send_mail(body, email_address):
-    url = BASE_API_URL + 'accounts/%s/messages'
-    url = url % ZOHO_DATA['account_id']
-    data = {
-        "fromAddress": FROM_EMAIL_ADDR,
-        "toAddress": email_address,
-        "ccAddress": "",
-        "bccAddress": "",
-        "subject": "Test E-Mail",
-        "content": body,
-        "askReceipt": "no"
-    }
-    headers = {
-        'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
-    }
-    r = requests.post(url, headers=headers, json=data)
-    print(r.text)
+# def send_mail(body, email_address):
+#     url = BASE_API_URL + 'accounts/%s/messages'
+#     url = url % ZOHO_DATA['account_id']
+#     data = {
+#         "fromAddress": FROM_EMAIL_ADDR,
+#         "toAddress": email_address,
+#         "ccAddress": "",
+#         "bccAddress": "",
+#         "subject": "Test E-Mail",
+#         "content": body,
+#         "askReceipt": "no"
+#     }
+#     headers = {
+#         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
+#     }
+#     r = requests.post(url, headers=headers, json=data)
+#     print(r.text)
 
 def get_mail_context(folder_id, message_id, from_address, thread_id):
     url = (
@@ -96,13 +96,14 @@ def get_mail_context(folder_id, message_id, from_address, thread_id):
         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
     }
     
-    print(url)
+    # print(url)
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
-    emails = data['data']['content']
-    soup = BeautifulSoup(emails, 'html.parser')
-    train_txt(soup.get_text())
-    print(soup.get_text())
+    if 'content' in data['data']:
+        emails = data['data']['content']
+        soup = BeautifulSoup(emails, 'html.parser')
+        train_txt(soup.get_text())
+        # print(soup.get_text(), "\n---------------")
     # filename = f"./data/message-{from_address}-{thread_id}.txt"
     # with open("filename.txt", 'a') as f:
     #     f.write(filename + '\n')
@@ -128,8 +129,9 @@ def get_mail_list(start):
         "%s?"
         "folderId=%s&"
         "start=%s&"
-        "limit=%s"
-    ) % (url, ZOHO_DATA['folder_id'], start, 10)
+        "limit=%s&"
+        "threadedMails=true"
+    ) % (url, ZOHO_DATA['folder_id'], start, 200)
     
     headers = {
         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
@@ -137,7 +139,7 @@ def get_mail_list(start):
     
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
-    print(data)
+    # print(data)
     if len(data['data']) == 0:
         return False
     for message in data['data']:
@@ -150,27 +152,27 @@ def get_mail_list(start):
         get_mail_context(folder_id, message_id, from_address, thread_id)
     return True
 
-def refresh_auth():
-    # Update the access token every 50 minutes using the refresh token.
-    # The access token is valid for exactly 1 hour.
-    time.sleep(10)
-    while True:
-        url = (
-            '%soauth/v2/token?'
-            'refresh_token=%s&'
-            'client_id=%s&'
-            'client_secret=%s&'
-            'grant_type=refresh_token'
-        ) % (BASE_OAUTH_API_URL, ZOHO_DATA['refresh_token'], CLIENT_ID, CLIENT_SECRET)
-        r = requests.post(url)
-        data = json.loads(r.text)
-        if 'access_token' in data:
-            ZOHO_DATA['access_token'] = data['access_token']
-            print('refreshed', ZOHO_DATA)
-            time.sleep(3000)  # 50 minutes
-        else:
-            # Retry after 1 minute
-            time.sleep(60)
+# def refresh_auth():
+#     # Update the access token every 50 minutes using the refresh token.
+#     # The access token is valid for exactly 1 hour.
+#     time.sleep(10)
+#     while True:
+#         url = (
+#             '%soauth/v2/token?'
+#             'refresh_token=%s&'
+#             'client_id=%s&'
+#             'client_secret=%s&'
+#             'grant_type=refresh_token'
+#         ) % (BASE_OAUTH_API_URL, ZOHO_DATA['refresh_token'], CLIENT_ID, CLIENT_SECRET)
+#         r = requests.post(url)
+#         data = json.loads(r.text)
+#         if 'access_token' in data:
+#             ZOHO_DATA['access_token'] = data['access_token']
+#             print('refreshed', ZOHO_DATA)
+#             time.sleep(3000)  # 50 minutes
+#         else:
+#             # Retry after 1 minute
+#             time.sleep(60)
 
 
 def start():

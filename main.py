@@ -20,21 +20,21 @@ app.include_router(Zoho.router, tags=["zoho"])
 
 # start()
 msg="""
+On Thu, 20 Apr 2023 15:00:00 -0400 No Nothing Very Sensitive (Shopify) <mailer@shopify.com> wrote ---
+
+
 You received a new message from your online store's contact form.
 Country Code:
 US
 Name:
-Amy Bates
+Shawna Sahs
 Email:
-amyhbates@gmail.com
+shawna.sahs@outlook.com
 Phone Number:
-9194140474
+402-490-2344
 Comment:
-I have a 6.8 oz bottle of Do Nothing Very Sensitive & Strong Mousse which I have loved. It is a great product. 
-I can feel the can is still very full and yet when I push down the top nozzle, no foam. Nothing comes out except a little drip. I want more, but this is a malfunction that makes me wonder about ordering again.  The numbers in pink on the bottom of the can I have are 13:59.   20106. 
-Can you help? 
-Thank you.
-Amy Bates
+I have a very strong and sensitive hairspray that is only spraying air and no product. I also have a very sensitive multispray that the sprayer won't work. It is the only one I have so I can't try another sprayer. Both of these are new even though I have had them a while. I order a lot at one time to save on shipping and to have product on hand. 
+
 """
 get_context(msg)
 
