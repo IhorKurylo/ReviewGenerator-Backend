@@ -80,9 +80,6 @@ async def read_csv_file(filename: str, rate: list):
     examples = ""
     length = len(body)
 
-    
-    
-
     for i in range(0, min(5, length)):
         examples += f"Sample Review {i}: \n {str(body[i])}\n\n"
     with open("./data/reviews.txt", "w") as txt_file:
@@ -91,7 +88,8 @@ async def read_csv_file(filename: str, rate: list):
     tasks = []
     medium = int(number_of_reviews * 0.3 / unit)
     long = int(number_of_reviews * 0.2 / long_unit)
-    short = int((number_of_reviews - medium*unit - long*long_unit) / unit)
+    short = int((number_of_reviews - medium*unit -
+                long*long_unit - 1) / unit + 1)
 
     for i in range(long):
         current_rate = choose_rate(rate)
