@@ -316,7 +316,7 @@ async def start(reviewCount: int, rate: int, From: str, To: str, keywords: str, 
     print("list_bodys: ", len(list_bodys))
 
     min_len = min(len(list_titles), len(list_bodys),
-                  len(list_names), len(list_emails))
+                  len(list_names), len(list_emails), number_of_reviews)
     print(min_len)
 
     list_titles = list_titles[:min_len]
