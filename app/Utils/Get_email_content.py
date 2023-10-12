@@ -8,8 +8,8 @@ from fastapi import Request
 FROM_EMAIL_ADDR = 'ihorkurylo5@zohomail.com'
 TO_EMAIL_ADDR = 'andriilohvin@gmail.com'
 REDIRECT_URL = 'http://localhost:5000/callback/'
-CLIENT_ID = '1000.PNFU8HRNLRN9MPQ2RSFI3PYFVJ75LC'
-CLIENT_SECRET = '413be26aa64ff2111cf96afb02c9acd19ab5b583d0'
+CLIENT_ID = '1000.BWV591EOQJX8AUJS22NUGIJGIMXULO'
+CLIENT_SECRET = '00bc90f92fe8ec91904acb23b285f0b7602a9893f8'
 BASE_OAUTH_API_URL = 'https://accounts.zoho.com/'
 BASE_API_URL = 'https://mail.zoho.com/api/'
 
@@ -37,6 +37,7 @@ def req_zoho():
     print('CLICK THE LINK:')
     print(url)
     print('This only has to be done once.')
+    return url
 
 
 def get_access_token(request: Request, code):
@@ -54,7 +55,7 @@ def get_access_token(request: Request, code):
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     r = requests.post(url, data=data, headers=headers)
     data = json.loads(r.text)
-    print(data)
+    # print(data)
     ZOHO_DATA['access_token'] = data['access_token']
 
 
@@ -96,7 +97,7 @@ def get_mail_context(folder_id, message_id, from_address, thread_id):
         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
     }
     
-    # print(url)
+    print(url)
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
     if 'content' in data['data']:
@@ -110,18 +111,17 @@ def get_mail_context(folder_id, message_id, from_address, thread_id):
     # with open(filename, 'a') as f:
     #     f.write(emails + '\n')
 
-# def get_mail_folders():
-#     url = BASE_API_URL + 'accounts/%s/folders'
-#     url = url % ZOHO_DATA['account_id']
-#     headers = {
-#         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
-#     }
-#     r = requests.get(url, headers=headers)
-#     data = json.loads(r.text)
-#     print(data['data'][0]['folderId'], data['data'][0]['folderName'])
-#     ZOHO_DATA['folder_id'] = data['data'][0]['folderId']  # 7666736000000008014
+def get_mail_folders():
+    url = BASE_API_URL + 'accounts/%s/folders'
+    url = url % ZOHO_DATA['account_id']
+    headers = {
+        'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
+    }
+    r = requests.get(url, headers=headers)
+    data = json.loads(r.text)
+    ZOHO_DATA['folder_id'] = data['data'][0]['folderId']
 
-def get_mail_list(start):
+def get_mail_list(start, unit):
 
     url = BASE_API_URL + 'accounts/%s/messages/view'
     url = url % ZOHO_DATA['account_id']
@@ -131,8 +131,7 @@ def get_mail_list(start):
         "start=%s&"
         "limit=%s&"
         "threadedMails=true"
-    ) % (url, ZOHO_DATA['folder_id'], start, 200)
-    
+    ) % (url, ZOHO_DATA['folder_id'], start, unit)
     headers = {
         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
     }
@@ -175,5 +174,11 @@ def get_mail_list(start):
 #             time.sleep(60)
 
 
-def start():
-    req_zoho()
+def start(clientId: str, clientSecret: str):
+    # global CLIENT_ID, CLIENT_SECRET
+    # if clientId != "":
+    #     CLIENT_ID = clientId
+    # if clientSecret != "":
+    #     CLIENT_SECRET = clientSecret
+    # print(CLIENT_ID)
+    return req_zoho()

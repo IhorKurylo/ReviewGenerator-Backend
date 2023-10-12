@@ -37,6 +37,7 @@ def tiktoken_len(text):
     )
     return len(tokens)
 
+
 def delete_all_data():
     # Initialize Pinecone client
     pinecone.init(api_key=api_key, environment=os.getenv('PINECONE_ENV'))
@@ -67,6 +68,7 @@ def split_document(doc: Document):
         separators=["\n\n", "\n", " ", ""]
     )
     chunks = text_splitter.split_documents([doc])
+    print(chunks)
     return chunks
 
 
@@ -76,6 +78,7 @@ def train_txt(threshold: str):
     # documents = loader.load()
     doc = Document(page_content=threshold, metadata={"source": threshold})
     # print("threshold: -----------------------_________________", threshold)
+    # print(doc)
     chunks = split_document(doc)
     Pinecone.from_documents(
         chunks, embeddings, index_name=index_name)
@@ -92,13 +95,15 @@ def get_context(msg: str):
     # print("here")
     db = Pinecone.from_existing_index(
         index_name=index_name, embedding=embeddings)
-    results = db.similarity_search_with_score(msg, k=3)
+    results = db.similarity_search_with_score(msg, k=4)
     # print(results)
     context = ""
+    context1=""
     for result in results:
-        context += ''
-        if result[1] >= similarity_value_limit:
-            context += result[0].metadata['source']
+        context += '\n\n'
+        # print(result[0].page_content)
+        # if result[1] >= similarity_value_limit:
+        context += result[0].metadata['source']
     # tokens = 0
     # for result in results:
     #     print(result)
@@ -135,11 +140,11 @@ def get_answer(context, msg):
                     {msg}
                     # The email you see above was sent to me.
                     # Please provide me response to the email provided above.
-                """ }
+                """}
             ],
             # stream=True
         )
-        print("answer --------------:\n", response.choices[0].message.content)
+        # print("answer --------------:\n", response.choices[0].message.content)
         return response.choices[0].message.content
         # for chunk in response:
         #     if 'content' in chunk.choices[0].delta:
@@ -149,6 +154,3 @@ def get_answer(context, msg):
         #         final += string
     except Exception as e:
         print(e)
-    
-
-

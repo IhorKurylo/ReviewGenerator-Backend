@@ -1,13 +1,13 @@
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, Response
 
-from app.Utils.Get_email_content import get_access_token, get_account_id, get_mail_context, get_mail_list, start
+from app.Utils.Get_email_content import get_access_token, get_account_id, get_mail_context, get_mail_list, get_mail_folders, start
 from app.Utils.Pinecone import get_context
 
 
 
 router = APIRouter()
 
-
+EmailCount = 5
 
 @router.route('/callback/', methods=['GET', 'POST'])
 def zoho_callback_route(request: Request):
@@ -17,12 +17,15 @@ def zoho_callback_route(request: Request):
     if code is not None:
         get_access_token(request, code)
         get_account_id()
-    for i in range(0, 80):
+    get_mail_folders()
+    unit = min(EmailCount, 100)
+    n = int((EmailCount-1) / unit + 1)
+    print(n," ", unit)
+    for i in range(0, n):
         print("step: ", i)
-        if get_mail_list(1 + i*200) == False :
+        if get_mail_list(1 + i * unit, unit) == False :
             break
-    # get_mail_list()
-    return []
+    return Response(content="200", media_type="text/plain")
 
 
 # @router.route('/sendmail/', methods=['GET', 'POST'])
@@ -47,6 +50,8 @@ def generate_response_route(email: str = Form(...)):
     return get_context(email)
 
 @router.post('/extract-email-content')
-def extract_email_content():
-    start()
-    return []
+def extract_email_content(clientId: str = Form(...), clientSecret: str = Form(...), emailCount: int = Form(...)):
+    # print(clientId, clientSecret)
+    global EmailCount
+    EmailCount = emailCount
+    return start(clientId, clientSecret)
