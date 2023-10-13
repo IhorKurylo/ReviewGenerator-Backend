@@ -46,8 +46,8 @@ def zoho_callback_route(request: Request):
 #     return 'OK', 200
 
 @router.post('/generate-response')
-def generate_response_route(email: str = Form(...)):
-    return get_context(email)
+def generate_response_route(email: str = Form(...), keywords: str = Form(...)):
+    return get_context(email, keywords)
 
 @router.post('/extract-email-content')
 def extract_email_content(clientId: str = Form(...), clientSecret: str = Form(...), emailCount: int = Form(...)):
