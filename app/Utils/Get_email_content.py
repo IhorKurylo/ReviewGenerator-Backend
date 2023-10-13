@@ -92,24 +92,25 @@ def get_mail_context(folder_id, message_id, from_address, thread_id):
         "%saccounts/%s/folders/%s/messages/%s/content?"
         "includeBlockContent=%s"
     ) % (BASE_API_URL, ZOHO_DATA['account_id'], folder_id, message_id, "true")
-    
+
     headers = {
         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
     }
-    
+
     print(url)
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
     if 'content' in data['data']:
         emails = data['data']['content']
         soup = BeautifulSoup(emails, 'html.parser')
-        train_txt(soup.get_text())
-        # print(soup.get_text(), "\n---------------")
+        # train_txt(soup.get_text())
+        print(soup.get_text(), "\n---------------")
     # filename = f"./data/message-{from_address}-{thread_id}.txt"
     # with open("filename.txt", 'a') as f:
     #     f.write(filename + '\n')
     # with open(filename, 'a') as f:
     #     f.write(emails + '\n')
+
 
 def get_mail_folders():
     url = BASE_API_URL + 'accounts/%s/folders'
@@ -120,6 +121,7 @@ def get_mail_folders():
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
     ZOHO_DATA['folder_id'] = data['data'][0]['folderId']
+
 
 def get_mail_list(start, unit):
 
@@ -135,7 +137,7 @@ def get_mail_list(start, unit):
     headers = {
         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
     }
-    
+
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
     # print(data)
@@ -175,10 +177,10 @@ def get_mail_list(start, unit):
 
 
 def start(clientId: str, clientSecret: str):
-    # global CLIENT_ID, CLIENT_SECRET
-    # if clientId != "":
-    #     CLIENT_ID = clientId
-    # if clientSecret != "":
-    #     CLIENT_SECRET = clientSecret
-    # print(CLIENT_ID)
+    global CLIENT_ID, CLIENT_SECRET
+    if clientId != "":
+        CLIENT_ID = clientId
+    if clientSecret != "":
+        CLIENT_SECRET = clientSecret
+    print(CLIENT_ID)
     return req_zoho()
