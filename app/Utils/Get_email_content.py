@@ -112,10 +112,10 @@ def get_mail_context(folder_id, message_id, from_address, thread_id):
         # for email in emails_in_same_thread:
         #     train_txt(email, metadata)
         train_txt(metadata, metadata)
-        #     print("email: ", email)
-        #     print("\n")
-        #     print("metadata", metadata)
-        #     print("---------------------")
+            # print("email: ", email)
+            # print("\n")
+            # print("metadata", metadata)
+            # print("---------------------")
         # print("_________________________")
         # print("_________________________")
         emails_in_same_thread = []
@@ -124,6 +124,7 @@ def get_mail_context(folder_id, message_id, from_address, thread_id):
     if 'content' in data['data']:
         emails = data['data']['content']
         soup = BeautifulSoup(emails, 'html.parser')
+        # print(soup.get_text())
         metadata += '\n' + soup.get_text()
         emails_in_same_thread.append(soup.get_text())
         # print(thread_id, "     ", len(emails_in_same_thread))

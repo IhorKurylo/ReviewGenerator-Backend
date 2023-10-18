@@ -29,7 +29,7 @@ pinecone.init(
 index_name = os.getenv('PINECONE_INDEX')
 embeddings = OpenAIEmbeddings()
 similarity_min_value = 0.5
-
+email_address = ["<info@fourreasons.us>", "<info@nonothing.us>", "<info@kcprofessionalusa.com>", "<tom@fourreasons.us>"]
 
 def tiktoken_len(text):
     tokens = tokenizer.encode(
@@ -69,7 +69,6 @@ def split_document(doc: Document):
         separators=["\n\n", "\n", " ", ""]
     )
     chunks = text_splitter.split_documents([doc])
-    # print(chunks)
     return chunks
 
 
@@ -114,7 +113,8 @@ def get_context(msg: str, keywords: str):
     # print("context --------------------- ", context)
     # print("_______________________________________")
     context = re.sub(r'\n{2,}', ' ', context)
-    context = context[:(6000*4)]
+    context = context[:(4500*4)]    
+    print(tiktoken_len(context))
     return get_answer(context, msg, keywords)
 
 
@@ -128,7 +128,8 @@ def get_answer(context, msg, keywords):
         The samples given above are not given in the order of emails and responses, and several conversations are listed.
         It can contains a similar response corresponding to the message given below by the user.
         Based on the facts and the sent and received times in the aforementioned samples, you must select and extract the portion that you believe is most comparable to the user's response to the message.
-        This respose was written by <info@fourreasons.us>.
+        This response was written by one of these email addresses below.
+        {email_address}
         Eliminate unnecessary information, avoid repetitive parts, and try to pick the right parts.
     """
 
@@ -146,12 +147,9 @@ def get_answer(context, msg, keywords):
                     Don't say that you can't generate an appropriate response.
                     Generate your own response only if you are sure that no suitable response exists.
                 """}
-                # Don't forget to focus on these keywords.
-                # {keywords}
             ],
             # stream=True
         )
-        # print("answer --------------:\n", response.choices[0].message.content)
         result += response.choices[0].message.content
     
         instructor = f"""
@@ -172,8 +170,6 @@ def get_answer(context, msg, keywords):
                     When you modify your response, please focus on below keywords.
                     {keywords}
                 """}
-                # Don't forget to focus on these keywords.
-                # {keywords}
             ],
             # stream=True
         )
