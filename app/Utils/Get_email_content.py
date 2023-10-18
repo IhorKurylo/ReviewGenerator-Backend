@@ -14,6 +14,10 @@ BASE_OAUTH_API_URL = 'https://accounts.zoho.com/'
 BASE_API_URL = 'https://mail.zoho.com/api/'
 
 
+previous_thread_Id = ""
+emails_in_same_thread = []
+metadata = ""
+
 ZOHO_DATA = {
     "access_token": "",
     "refresh_token": "",
@@ -88,23 +92,42 @@ def get_account_id():
 #     print(r.text)
 
 def get_mail_context(folder_id, message_id, from_address, thread_id):
+    global previous_thread_Id, emails_in_same_thread, metadata
     url = (
         "%saccounts/%s/folders/%s/messages/%s/content?"
         "includeBlockContent=%s"
-    ) % (BASE_API_URL, ZOHO_DATA['account_id'], folder_id, message_id, "true")
+    ) % (BASE_API_URL, ZOHO_DATA['account_id'], folder_id, message_id, "false")
 
     headers = {
         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
     }
 
-    print(url)
+    # print(url)
+    # print(from_address, "    ", thread_id)
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
+    # print("data: ", data);
+    # print("----------------")
+    if thread_id != previous_thread_Id:
+        # for email in emails_in_same_thread:
+        #     train_txt(email, metadata)
+        train_txt(metadata, metadata)
+        #     print("email: ", email)
+        #     print("\n")
+        #     print("metadata", metadata)
+        #     print("---------------------")
+        # print("_________________________")
+        # print("_________________________")
+        emails_in_same_thread = []
+        metadata = ""
+        previous_thread_Id = thread_id
     if 'content' in data['data']:
         emails = data['data']['content']
         soup = BeautifulSoup(emails, 'html.parser')
-        # train_txt(soup.get_text())
-        print(soup.get_text(), "\n---------------")
+        metadata += '\n' + soup.get_text()
+        emails_in_same_thread.append(soup.get_text())
+        # print(thread_id, "     ", len(emails_in_same_thread))
+
     # filename = f"./data/message-{from_address}-{thread_id}.txt"
     # with open("filename.txt", 'a') as f:
     #     f.write(filename + '\n')

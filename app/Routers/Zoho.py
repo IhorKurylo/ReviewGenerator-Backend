@@ -4,10 +4,10 @@ from app.Utils.Get_email_content import get_access_token, get_account_id, get_ma
 from app.Utils.Pinecone import get_context
 
 
-
 router = APIRouter()
 
 EmailCount = 5
+
 
 @router.route('/callback/', methods=['GET', 'POST'])
 def zoho_callback_route(request: Request):
@@ -20,10 +20,10 @@ def zoho_callback_route(request: Request):
     get_mail_folders()
     unit = min(EmailCount, 100)
     n = int((EmailCount-1) / unit + 1)
-    print(n," ", unit)
+    print(n, " ", unit)
     for i in range(0, n):
         print("step: ", i)
-        if get_mail_list(1 + i * unit, unit) == False :
+        if get_mail_list(1 + i * unit, unit) == False:
             break
     return Response(content="200", media_type="text/plain")
 
@@ -48,6 +48,7 @@ def zoho_callback_route(request: Request):
 @router.post('/generate-response')
 def generate_response_route(email: str = Form(...), keywords: str = Form(...)):
     return get_context(email, keywords)
+
 
 @router.post('/extract-email-content')
 def extract_email_content(clientId: str = Form(...), clientSecret: str = Form(...), emailCount: int = Form(...)):
