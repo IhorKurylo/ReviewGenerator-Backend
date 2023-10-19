@@ -25,6 +25,7 @@ def zoho_callback_route(request: Request):
         print("step: ", i)
         if get_mail_list(1 + i * unit, unit) == False:
             break
+    print("done")
     return Response(content="200", media_type="text/plain")
 
 
