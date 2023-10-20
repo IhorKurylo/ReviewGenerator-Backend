@@ -18,12 +18,12 @@ def zoho_callback_route(request: Request):
         get_access_token(request, code)
         get_account_id()
     get_mail_folders()
-    unit = min(EmailCount, 100)
+    unit = min(EmailCount, 200)
     n = int((EmailCount-1) / unit + 1)
     print(n, " ", unit)
     for i in range(0, n):
         print("step: ", i)
-        if get_mail_list(1 + i * unit, unit) == False:
+        if get_mail_list(84 + i * unit, unit) == False:
             break
     print("done")
     return Response(content="200", media_type="text/plain")

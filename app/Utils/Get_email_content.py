@@ -8,7 +8,7 @@ from fastapi import Request
 # Configure this.
 FROM_EMAIL_ADDR = 'ihorkurylo5@zohomail.com'
 TO_EMAIL_ADDR = 'andriilohvin@gmail.com'
-REDIRECT_URL = 'http://95.164.44.248:5000/callback/'
+REDIRECT_URL = 'https://api.kcprofessionalusa.com/callback/'
 CLIENT_ID = '1000.BWV591EOQJX8AUJS22NUGIJGIMXULO'
 CLIENT_SECRET = '00bc90f92fe8ec91904acb23b285f0b7602a9893f8'
 BASE_OAUTH_API_URL = 'https://accounts.zoho.com/'
@@ -114,12 +114,13 @@ def get_mail_context(folder_id, message_id, from_address, thread_id):
     # print(from_address, "    ", thread_id)
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
+    print("train")
 
     if thread_id == "-1" or thread_id != previous_thread_Id:
         # for email in emails_in_same_thread:
         #     train_txt(email, metadata)
         train_txt(metadata, metadata)
-        # print(metadata, '\n--------------------\n')
+        print(metadata, '\n--------------------\n')
         emails_in_same_thread = []
         metadata = ""
         previous_thread_Id = thread_id
@@ -145,10 +146,13 @@ def get_mail_folders():
     data = json.loads(r.text)
     ZOHO_DATA['folder_id'] = data['data'][0]['folderId']
 
+
 count = 0
 
+
 def get_mail_list(start, unit):
-    global count
+    global count 
+    count = start - 1
     url = BASE_API_URL + 'accounts/%s/messages/view'
     url = url % ZOHO_DATA['account_id']
     url = (
@@ -167,8 +171,8 @@ def get_mail_list(start, unit):
     if len(data['data']) == 0:
         return False
     for message in data['data']:
-        # print("count: ", count)
-        # count += 1
+        print("count: ", count)
+        count += 1
         message_id = message['messageId']
         folder_id = message['folderId']
         from_address = message['fromAddress']
