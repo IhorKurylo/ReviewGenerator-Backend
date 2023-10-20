@@ -41,6 +41,13 @@ def tiktoken_len(text):
     return len(tokens)
 
 
+def clean(txt: str):
+    keep_characters = set(
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-@ ,\'"().!?\n\r%$#&^*+-~<>{}[]/|:;')
+    new_text = ''.join(ch for ch in txt if ch in keep_characters)
+    return new_text
+
+
 def delete_all_data():
     # Initialize Pinecone client
     pinecone.init(api_key=api_key, environment=os.getenv('PINECONE_ENV'))
@@ -90,25 +97,28 @@ def train_txt(content: str, threshold: str):
 
 
 def get_context(msg: str, keywords: str):
+    # train_txt(msg, msg)
+    # print(msg)
     results = tuple()
     db = Pinecone.from_existing_index(
         index_name=index_name, embedding=embeddings)
-    results = db.similarity_search_with_score(msg, k=20)
+    results = db.similarity_search_with_score(msg, k=150)
     # print(results)
     context = ""
     facts = ""
     for result in results:
         facts += result[0].page_content
-    with open("./data/pinecone.txt", "w") as txt_file:
-        for i in range(0, 20):
-            context += '\n'
-            # txt_file.write('score: ' + str(result[1]))
-            # txt_file.write("page_content" + result[0].page_content)
-            # txt_file.write("metadata: " + result[0].metadata['source']+'\n')
-            # print('score: ', result[1])
-            # print("page_content", result[0].page_content)
-            # print("metadata: ", result[0].metadata['source'], '\n')
-            context += results[i][0].metadata['source']
+    facts = re.sub(r'\n{2,}', ' ', facts)
+    facts = clean(facts)
+    for i in range(0, 30):
+        context += '\n'
+        # txt_file.write('score: ' + str(result[1]))
+        # txt_file.write("page_content" + result[1].page_content)
+        # txt_file.write("metadata: " + result[0].metadata['source']+'\n')
+        # print('score: ', result[1])
+        # print("page_content", result[0].page_content)
+        # print("metadata: ", result[0].metadata['source'], '\n')
+        context += results[i][0].metadata['source']
     # tokens = 0
     # for result in results:
     #     print(result)
@@ -118,12 +128,15 @@ def get_context(msg: str, keywords: str):
     # print("context --------------------- ", context)
     # print("_______________________________________")
     context = re.sub(r'\n{2,}', ' ', context)
-    context = context[:(min(4000*4, len(context)))]
-    token = tiktoken_len(context) + tiktoken_len(facts)
-    print(len(context)," ", tiktoken_len(context))
-    print(len(facts)/4)
-    if token >= 8100:
-        context = context[:(3500*4)]
+    # print(tiktoken_len(context))
+    context = clean(context)
+    # print(tiktoken_len(context))
+    with open("./data/pinecone.txt", "w") as txt_file:
+        txt_file.write(context)
+    context = context[:(7000*4)]
+    # print(tiktoken_len(context))
+    # if tiktoken_len(context) > 7300:
+    #     context = context[:(2500*4)]
     return get_answer(context, facts, msg, keywords)
 
 
@@ -132,27 +145,21 @@ def get_answer(context, facts, msg, keywords):
 
     result = "The most similar response that you already received before: \n\n"
 
-    print(context)
+    print(facts)
 
     # These are facts you can refer to.
     # {facts}
     instructor = f"""
-        These are sample reponses you can refer to.
-        {facts + context}
+        {context}
         The samples given above are not given in the order of emails and responses, and several conversations are listed.
         It can contains a similar response corresponding to the message given below by the user.
         Based on the facts and the sent and received times in the aforementioned samples, you must select and extract the portion that you believe is most comparable to the user's response to the message.
         This response was written by one of these email addresses below.
         {email_address}
         Eliminate unnecessary information, avoid repetitive parts, and try to pick the right parts.
-        Additionally, you have to analyze sample responses provided above in detail and based on that, you must answer to user provided question in as much detail as possible.
-        Analyze sample responsed give above carefully and then extract valuable data, answer to user's messages.
-        Provide me valuable information as a list as much as you can.
-        For example, you can extract and provide all ingradients of mentioned product.
-        Don't output you can't generate response and facts.
-        Don't change extracted response.
-        You shouldn't say that you can't generate an appropriate response.
-
+        Then you have to answer to user's requirements or questions.
+        You have to analyze all give responses above and then extract all valuable datas for answering questions based on analyses.
+        Output answer but valuables datas extraced.
     """
 
     try:
@@ -163,7 +170,13 @@ def get_answer(context, facts, msg, keywords):
                 {'role': 'system', 'content': instructor},
                 {'role': 'user', 'content': f"""
                     {msg}
-                    Split the response and facts with ------------------.
+                    This message you see was given by me.
+                    Please extract appropriate response from your samples.
+                    Don't change extracted response.
+                    Don't say that you can't generate an appropriate response.
+                    Generate your own response only if you are sure that no suitable response exists.
+                    Please split the extracted suitable response and answer with 
+                    ----------------------------------------
                 """}
             ],
             # stream=True

@@ -1,4 +1,5 @@
 import json
+import re
 import time
 import requests
 from app.Utils.Pinecone import train_txt
@@ -7,7 +8,7 @@ from fastapi import Request
 # Configure this.
 FROM_EMAIL_ADDR = 'ihorkurylo5@zohomail.com'
 TO_EMAIL_ADDR = 'andriilohvin@gmail.com'
-REDIRECT_URL = 'http://localhost:5000/callback/'
+REDIRECT_URL = 'http://95.164.44.248:5000/callback/'
 CLIENT_ID = '1000.BWV591EOQJX8AUJS22NUGIJGIMXULO'
 CLIENT_SECRET = '00bc90f92fe8ec91904acb23b285f0b7602a9893f8'
 BASE_OAUTH_API_URL = 'https://accounts.zoho.com/'
@@ -27,6 +28,13 @@ ZOHO_DATA = {
     "account_id": "",
     "folder_id": "",
 }
+
+
+def clean(txt: str):
+    keep_characters = set(
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-@ ,\'"().!?\n\r%$#&^*+-~<>{}[]/|:;')
+    new_text = ''.join(ch for ch in txt if ch in keep_characters)
+    return new_text
 
 
 def req_zoho():
@@ -106,34 +114,25 @@ def get_mail_context(folder_id, message_id, from_address, thread_id):
     # print(from_address, "    ", thread_id)
     r = requests.get(url, headers=headers)
     data = json.loads(r.text)
-    # print("data: ", data);
-    # print("----------------")
-    if thread_id != previous_thread_Id:
+
+    if thread_id == "-1" or thread_id != previous_thread_Id:
         # for email in emails_in_same_thread:
         #     train_txt(email, metadata)
         train_txt(metadata, metadata)
-        # print("email: ", email)
-        # print("\n")
-        # print("metadata", metadata)
-        # print("---------------------")
-        # print("_________________________")
-        # print("_________________________")
+        # print(metadata, '\n--------------------\n')
         emails_in_same_thread = []
         metadata = ""
         previous_thread_Id = thread_id
     if 'content' in data['data']:
         emails = data['data']['content']
         soup = BeautifulSoup(emails, 'html.parser')
-        # print(soup.get_text())
-        metadata += '\n' + soup.get_text()
-        emails_in_same_thread.append(soup.get_text())
-        # print(thread_id, "     ", len(emails_in_same_thread))
-
-    # filename = f"./data/message-{from_address}-{thread_id}.txt"
-    # with open("filename.txt", 'a') as f:
-    #     f.write(filename + '\n')
-    # with open(filename, 'a') as f:
-    #     f.write(emails + '\n')
+        soup_text = soup.get_text()
+        soup_text = re.sub(r'\n{2,}', ' ', soup_text)
+        soup_text = clean(soup_text)
+        metadata += '\n' + soup_text
+        # print(soup_text)
+        # metadata += '\n' + soup.find('div').text()
+        # emails_in_same_thread.append(soup.get_text())
 
 
 def get_mail_folders():
@@ -146,17 +145,17 @@ def get_mail_folders():
     data = json.loads(r.text)
     ZOHO_DATA['folder_id'] = data['data'][0]['folderId']
 
+count = 0
 
 def get_mail_list(start, unit):
-
+    global count
     url = BASE_API_URL + 'accounts/%s/messages/view'
     url = url % ZOHO_DATA['account_id']
     url = (
         "%s?"
         "folderId=%s&"
         "start=%s&"
-        "limit=%s&"
-        "threadedMails=true"
+        "limit=%s"
     ) % (url, ZOHO_DATA['folder_id'], start, unit)
     headers = {
         'Authorization': 'Zoho-oauthtoken ' + ZOHO_DATA['access_token']
@@ -168,10 +167,12 @@ def get_mail_list(start, unit):
     if len(data['data']) == 0:
         return False
     for message in data['data']:
+        # print("count: ", count)
+        # count += 1
         message_id = message['messageId']
         folder_id = message['folderId']
         from_address = message['fromAddress']
-        thread_id = ""
+        thread_id = "-1"
         if 'threadId' in message:
             thread_id = message['threadId']
         get_mail_context(folder_id, message_id, from_address, thread_id)
